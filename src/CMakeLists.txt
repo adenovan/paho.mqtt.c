@@ -59,6 +59,8 @@ IF (WIN32)
 ELSEIF (UNIX)
     IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
         SET(LIBS_SYSTEM c dl pthread)
+    ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Android")
+        SET(LIBS_SYSTEM c dl)
     ELSEIF (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
         SET(LIBS_SYSTEM compat pthread)
     ELSEIF()
@@ -164,18 +166,20 @@ IF (PAHO_WITH_SSL)
         RUNTIME DESTINATION  ${CMAKE_INSTALL_BINDIR})
 
     IF (PAHO_BUILD_STATIC)
-        ADD_LIBRARY(paho-mqtt3cs STATIC $<TARGET_OBJECTS:common_ssl_obj> MQTTClient.c SSLSocket.c)
-        ADD_LIBRARY(paho-mqtt3as STATIC $<TARGET_OBJECTS:common_ssl_obj> MQTTAsync.c SSLSocket.c)
+        ADD_LIBRARY(paho-mqtt3cs-static STATIC $<TARGET_OBJECTS:common_ssl_obj> MQTTClient.c SSLSocket.c)
+        ADD_LIBRARY(paho-mqtt3as-static STATIC $<TARGET_OBJECTS:common_ssl_obj> MQTTAsync.c SSLSocket.c)
 
-        TARGET_LINK_LIBRARIES(paho-mqtt3cs ${OPENSSL_LIBRARIES} ${LIBS_SYSTEM})
-        TARGET_LINK_LIBRARIES(paho-mqtt3as ${OPENSSL_LIBRARIES} ${LIBS_SYSTEM})
+        TARGET_LINK_LIBRARIES(paho-mqtt3cs-static ${OPENSSL_LIBRARIES} ${LIBS_SYSTEM})
+        TARGET_LINK_LIBRARIES(paho-mqtt3as-static ${OPENSSL_LIBRARIES} ${LIBS_SYSTEM})
         SET_TARGET_PROPERTIES(
-        paho-mqtt3cs paho-mqtt3as PROPERTIES
+        paho-mqtt3cs-static paho-mqtt3as-static PROPERTIES
         VERSION ${CLIENT_VERSION}
         SOVERSION ${PAHO_VERSION_MAJOR}
         COMPILE_DEFINITIONS "OPENSSL=1")
+        SET_TARGET_PROPERTIES(paho-mqtt3cs-static PROPERTIES OUTPUT_NAME paho-mqtt3cs)
+        SET_TARGET_PROPERTIES(paho-mqtt3as-static PROPERTIES OUTPUT_NAME paho-mqtt3as)
 
-        INSTALL(TARGETS paho-mqtt3cs paho-mqtt3as
+        INSTALL(TARGETS paho-mqtt3cs-static paho-mqtt3as-static
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     ENDIF()
 ENDIF()

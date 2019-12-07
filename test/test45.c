@@ -1484,7 +1484,7 @@ int test7_run(int qos, int start_mqtt_version, int restore_mqtt_version)
 	test_finished = 0;
 
 	createOpts.MQTTVersion = start_mqtt_version;
-	MQTTAsync_setTraceLevel(MQTTASYNC_TRACE_PROTOCOL);
+	MQTTAsync_setTraceLevel(MQTTASYNC_TRACE_ERROR);
 	rc = MQTTAsync_createWithOptions(&c, options.connection, "async_test7",
 			MQTTCLIENT_PERSISTENCE_DEFAULT, NULL, &createOpts);
 	assert("good rc from create",  rc == MQTTASYNC_SUCCESS, "rc was %d\n", rc);
@@ -1614,7 +1614,7 @@ int test7_run(int qos, int start_mqtt_version, int restore_mqtt_version)
 
 	MQTTAsync_destroy(&c); /* force re-reading persistence on create */
 
-	MQTTAsync_setTraceLevel(MQTTASYNC_TRACE_PROTOCOL);
+	MQTTAsync_setTraceLevel(MQTTASYNC_TRACE_ERROR);
 	createOpts.MQTTVersion = restore_mqtt_version;
 	rc = MQTTAsync_createWithOptions(&c, options.connection, "async_test7",
 			MQTTCLIENT_PERSISTENCE_DEFAULT, NULL, &createOpts);
@@ -1653,7 +1653,7 @@ int test7_run(int qos, int start_mqtt_version, int restore_mqtt_version)
 		opts.cleanstart = opts.cleansession = 0;
 		opts.connectProperties = &props;
 		property.identifier = MQTTPROPERTY_CODE_SESSION_EXPIRY_INTERVAL;
-		property.value.integer4 = 999999;
+		property.value.integer4 = 0; /* clean up at end of test */
 		MQTTProperties_add(opts.connectProperties, &property);
 		opts.onSuccess = NULL;
 		opts.onFailure = NULL;
@@ -1701,8 +1701,11 @@ int test7_run(int qos, int start_mqtt_version, int restore_mqtt_version)
 	rc = MQTTAsync_disconnect(c, &dopts);
 	assert("Good rc from disconnect", rc == MQTTASYNC_SUCCESS, "rc was %d", rc);
 
-	while (!test_finished)
+	i = 0;
+	while (!test_finished && ++i < 20)
 		MySleep(100);
+	assert("Test finished should be true", test_finished,
+		   "test_finished was %d", test_finished);
 
 	MQTTAsync_destroy(&c);
 
@@ -1721,8 +1724,10 @@ int test7(struct Options options)
 	global_start_time = start_clock();
 	rc = test7_run(1, MQTTVERSION_5, MQTTVERSION_5) +
 		 test7_run(2, MQTTVERSION_5, MQTTVERSION_5) +
+		 test7_run(1, MQTTVERSION_3_1_1, MQTTVERSION_3_1_1) +
+		 test7_run(2, MQTTVERSION_3_1_1, MQTTVERSION_3_1_1) /*+
 		 test7_run(2, MQTTVERSION_3_1_1, MQTTVERSION_5) +
-		 test7_run(2, MQTTVERSION_5, MQTTVERSION_3_1_1);
+		 test7_run(2, MQTTVERSION_5, MQTTVERSION_3_1_1)*/;
 	fprintf(xml, " time=\"%ld\" >\n", elapsed(global_start_time) / 1000);
 	if (cur_output != output)
 	{
