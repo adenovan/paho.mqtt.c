@@ -730,7 +730,7 @@ void MQTTProtocol_retry(time_t now, int doRetry, int regardless)
 	FUNC_ENTRY;
 	ListNextElement(bstate->clients, &current);
 	/* look through the outbound message list of each client, checking to see if a retry is necessary */
-	while (current)
+	while (current && current->content)
 	{
 		Clients* client = (Clients*)(current->content);
 		ListNextElement(bstate->clients, &current);
