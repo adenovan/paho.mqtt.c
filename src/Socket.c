@@ -726,6 +726,9 @@ int Socket_new(const char* addr, size_t addr_len, int port, int* sock)
 			rc = Socket_error("socket", *sock);
 		else
 		{
+
+			int nodelay = 1;
+			setsockopt(*sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&nodelay, sizeof(nodelay));
 #if defined(NOSIGPIPE)
 			int opt = 1;
 
